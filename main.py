@@ -1,12 +1,15 @@
 from tkinter import *
 from tkinter import filedialog
+import os
 import tkinter.messagebox as box
 from pygame import mixer
 
 filename = ''
+paused = False
 root = Tk()
 menubar = Menu(root)
 root.config(menu=menubar)
+root['background']='#856ff8'
 
 def browseFile():
     global filename
@@ -32,35 +35,60 @@ root.geometry(f'600x300+{(root.winfo_screenwidth()-600)//2}+{(root.winfo_screenh
 root.title("Melody")
 root.iconbitmap(r'./assets/favicon.ico')
 
-text = Label(root, text="Let's make something nice").pack()
+heading = Label(root, text="Play Music")
+heading.pack(pady=10)
 
 
 def playMusic():
-    if filename=='':
-        box.showerror(title="Choose a File!!", message="No File choosen. please choose a file.")
-    elif filename.endswith('.mp3'):
-        mixer.music.load(filename)
-        mixer.music.play()
+    if paused:
+        mixer.music.unpause()
     else:
-        box.showerror(title="Invalid!!", message="Filetype is Invalid.\nPlease check the choosen file or supported codec")
-        mixer.music.stop()
+        if filename=='':
+            box.showerror(title="Choose a File!!", message="No File choosen. please choose a file.")
+        elif filename.endswith('.mp3'):
+            mixer.music.load(filename)
+            mixer.music.play()
+            statusbar['text'] = "Now Playing: "+os.path.basename(filename)
+        else:
+            box.showerror(title="Invalid!!", message="Filetype is Invalid.\nPlease check the choosen file or supported codec")
+            mixer.music.stop()
 
 
 def stopMusic():
     mixer.music.stop()
+    statusbar['text'] = "Stopped: "+os.path.basename(filename)
+
+def pauseMusic():
+    global paused
+    paused = True
+    mixer.music.pause()
+    statusbar['text'] = "Paused: "+os.path.basename(filename)
 
 def setVolume(val):
     mixer.music.set_volume(int(val)/100)
 
+
+middleFrame = Frame(root, bg="#856ff8")
+middleFrame.pack(padx = 10, pady=10)
+
 play_photo = PhotoImage(file="./assets/play.png")
-play_btn = Button(root, image=play_photo, command=playMusic).pack()
+play_btn = Button(middleFrame, bg="#856ff8", image=play_photo, command=playMusic)
+play_btn.pack(side=LEFT, padx = 10)
+
+pause_photo = PhotoImage(file="./assets/pause.png")
+pause_btn = Button(middleFrame, bg="#856ff8", image=pause_photo, command=pauseMusic)
+pause_btn.pack(side=LEFT, padx = 10)
 
 stop_photo = PhotoImage(file="./assets/stop.png")
-stop_btn = Button(root, image=stop_photo, command=stopMusic).pack()
+stop_btn = Button(middleFrame, bg="#856ff8", image=stop_photo, command=stopMusic)
+stop_btn.pack(side=LEFT, padx = 10)
 
 volume = Scale(root, from_=0, to=100, orient=HORIZONTAL, command=setVolume)
 volume.set(50)
 mixer.music.set_volume(0.5)
 volume.pack()
+
+statusbar = Label(root, text="Welcome To melody", relief=SUNKEN)
+statusbar.pack(side=BOTTOM, fill=X)
 
 root.mainloop()
